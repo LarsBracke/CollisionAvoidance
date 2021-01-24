@@ -53,6 +53,11 @@ Elite::Vector2 CollisionAgent::GetGoalVelocity() const
 	return m_GoalVelocity;
 }
 
+Elite::Vector2 CollisionAgent::GetVelocity() const
+{
+	return m_Velocity;
+}
+
 void CollisionAgent::SetRadius(float newRadius)
 {
 	m_Radius = newRadius;
@@ -66,4 +71,9 @@ void CollisionAgent::SetBehavior(ISteeringBehavior* pNewBehavior)
 void CollisionAgent::SetVelocity(Elite::Vector2 newVelocity)
 {
 	m_Velocity = newVelocity;
+}
+
+void CollisionAgent::SetPosition(Elite::Vector2 newPosition)
+{
+	m_pSteeringAgent->SetPosition(newPosition);
 }

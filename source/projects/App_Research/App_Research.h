@@ -28,14 +28,14 @@ public:
 
 private:
 	//Datamembers
-	int m_AgentAmount = 2;
+	int m_AgentAmount = 5;
 	std::vector<CollisionAgent*> m_pAgents = {};
 	std::vector<CollisionAgent*> m_pNeighbors = {};
 
-	float m_NeighborhoodRadius = 100.f;
+	float m_NeighborhoodRadius = 10.f;
 	void RegisterNeighbors(CollisionAgent* pAgent);
 	float CalculateTimeToCollision(CollisionAgent* pFirst, CollisionAgent* pSecond);
-	float CalculateAvoidanceForce(CollisionAgent* pFirst, CollisionAgent* pSecond);
+	Elite::Vector2 CalculateAvoidanceForce(CollisionAgent* pFirst, CollisionAgent* pSecond, float timeToCollision);
 
 private:
 

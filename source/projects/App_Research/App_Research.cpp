@@ -45,17 +45,18 @@ void App_Research::Update(float deltaTime)
 	//	}
 	//}
 
-	// avoid collision
-
-	// for all agents
-	// check collision
-	// if collision
-	// adjust velocity
+	// debug rendering
+	for (CollisionAgent* pAgent : m_pAgents)
+	{
+		DEBUGRENDERER2D->DrawCircle(pAgent->GetPosition(), pAgent->GetRadius(), Color(1, 0, 0), 0.4f);
+		DEBUGRENDERER2D->DrawCircle(pAgent->GetPosition(), m_NeighborhoodRadius, Color(1, 1, 1), 0.4f);
+		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), pAgent->GetGoalVelocity(), pAgent->GetGoalVelocity().Magnitude(), Color(0, 1, 0), 0.4f);
+		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), pAgent->GetVelocity(), pAgent->GetVelocity ().Magnitude(), Color(0, 0, 1), 0.4f);
+	}
 
 	// update the agents
 	for (CollisionAgent* pAgent : m_pAgents)
 	{
-
 
 		// register the neighbors
 		RegisterNeighbors(pAgent);
@@ -69,15 +70,32 @@ void App_Research::Update(float deltaTime)
 			if (timeToCollision < pAgent->GetTimeHorizon() && timeToCollision > 0.f)
 			{
 				std::cout << "collision going to happen" << endl;
+
 				// adjust velocity
+				Vector2 avoidanceForce = 
+					CalculateAvoidanceForce(pAgent, pNeighbor, timeToCollision);
+
+				Vector2 newVelocity = 
+					pAgent->GetGoalVelocity() + avoidanceForce;
+				
+				newVelocity = 
+					newVelocity.GetNormalized() * pAgent->GetSteeringAgent()->GetMaxLinearSpeed();
+
+				pAgent->SetVelocity(newVelocity);
+
+				pAgent->SetPosition(pAgent->GetPosition() + (newVelocity * deltaTime));
 			}
 			else
 			{
-				std::cout << "no collision detected" << endl;
+				//std::cout << "no collision detected" << endl;
+
+				// update the agent
+				pAgent->SetVelocity(Vector2{ 0,0 });
+				pAgent->Update(deltaTime);
 			}
 		}
 
-		// update steering
+		// trim to world
 		if (pAgent->GetSteeringAgent())
 		{
 			if (m_TrimWorld)
@@ -86,8 +104,7 @@ void App_Research::Update(float deltaTime)
 			//UpdateTarget(a);
 		}
 		
-		// update the agent
-		pAgent->Update(deltaTime);
+
 	}
 
 #ifdef PLATFORM_WINDOWS
@@ -316,6 +333,24 @@ float App_Research::CalculateTimeToCollision(CollisionAgent* pFirst, CollisionAg
 	if (tau < 0.f)
 		return FLT_MAX;
 	return tau;
+}
+
+Elite::Vector2 App_Research::CalculateAvoidanceForce(CollisionAgent* pFirst, CollisionAgent* pSecond, float timeToCollision)
+{
+	Elite::Vector2 forceDirection
+		= pFirst->GetPosition() + pFirst->GetGoalVelocity() * timeToCollision - 
+		pSecond->GetPosition() * pSecond->GetGoalVelocity() * timeToCollision;
+
+	Elite::Vector2 force{ };
+	float magnitude{ };
+	if (forceDirection.x != 0 && forceDirection.y != 0)
+	{
+		force = forceDirection / sqrt(Dot(forceDirection, forceDirection));
+		magnitude = (pFirst->GetTimeHorizon() - timeToCollision) / (timeToCollision);
+		force *= magnitude;
+	}
+
+	return force;
 }
 
 //void App_Research::UpdateTarget(CollisionAgent& a)
